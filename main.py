@@ -6,7 +6,7 @@ import altair as alt
 st.set_page_config(layout="wide")
 # st.title('Halo Wil')
 st.title('Data Ketersediaan Kasur di Rumah Sakit Jawa Barat')
-DATA_URL = ('satgas-covid-19-dp_cvd_bor_data_wilayah_data')
+DATA_URL = ('satgas-covid-19-dp_cvd_bor_data_wilayah_data.csv')
 colsize=[3.2,5]
 
 @st.cache
