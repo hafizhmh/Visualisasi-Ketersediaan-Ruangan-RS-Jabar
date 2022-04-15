@@ -171,10 +171,7 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
         })
     # st_element.write(df_plot)
     # st_element.write(df_alt)
-    if df_alt.iloc[0]['Jumlah'] == 0 and df_alt.iloc[1]['Jumlah'] == 0:
-        date_selected = df_alt.iloc[0]['Tanggal'].strftime('%Y/%m/%d')
-        st_element.markdown(f'**(Data belum tersedia pada {date_selected})**')
-    else:
+    if df_alt.iloc[0]['Jumlah'] > 0 or df_alt.iloc[1]['Jumlah'] > 0:
         if axis_mode == 'Absolut':
             c = alt.Chart(df_alt).mark_bar().encode(
                 x=alt.X('Ketersediaan', scale=alt.Scale(), title=None, ),
@@ -191,6 +188,9 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
                 color=alt.Color(field="Ketersediaan", type="nominal"),
             )
             st_element.altair_chart(c,use_container_width=True)
+    else:
+        date_selected = df_alt.iloc[0]['Tanggal'].strftime('%Y/%m/%d')
+        st_element.markdown(f'**(Data belum tersedia pada {date_selected})**')
 
 # Create a text element and let the reader know the data is loading.
 data_load_state = st.text('Loading data...')
