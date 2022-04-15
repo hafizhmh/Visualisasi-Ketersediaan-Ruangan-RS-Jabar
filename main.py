@@ -62,7 +62,55 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
         for header_name in header_list:
             rename_columns[header_name] = f'{header_name} (persen)'
         df_plot = df_plot.rename(columns=rename_columns)
+
     st_element.line_chart(df_plot)
+
+    if 'Terpakai' in df_plot.columns:
+        df_plot_terpakai_max = max(df_plot['Terpakai'])
+        df_plot_terpakai_max_date = df_plot[df_plot['Terpakai'] == df_plot_terpakai_max].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_terpakai_min = min(df_plot['Terpakai'])
+        df_plot_terpakai_min_date = df_plot[df_plot['Terpakai'] == df_plot_terpakai_min].index.tolist()[0].strftime('%d %b %Y')
+        st_element.write(
+            f'Kamar terpakai maksimum sejumlah {df_plot_terpakai_max} pada {df_plot_terpakai_max_date}'
+        )
+        st_element.write(
+            f'Kamar terpakai minimum sejumlah {df_plot_terpakai_min} pada {df_plot_terpakai_min_date}'
+        )
+    if 'Terpakai (persen)' in df_plot.columns:
+        df_plot_terpakai_max = max(df_plot['Terpakai (persen)'])
+        df_plot_terpakai_max_date = df_plot[df_plot['Terpakai (persen)'] == df_plot_terpakai_max].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_terpakai_min = min(df_plot['Terpakai (persen)'])
+        df_plot_terpakai_min_date = df_plot[df_plot['Terpakai (persen)'] == df_plot_terpakai_min].index.tolist()[0].strftime('%d %b %Y')
+        st_element.write(
+            f'Kamar terpakai maksimum sejumlah {df_plot_terpakai_max:.2f}% pada {df_plot_terpakai_max_date}'
+        )
+        st_element.write(
+            f'Kamar terpakai minimum sejumlah {df_plot_terpakai_min:.2f}% pada {df_plot_terpakai_min_date}'
+        )
+    if 'Tersedia' in df_plot.columns:
+        df_plot_tersedia_max = max(df_plot['Terpakai'])
+        df_plot_tersedia_max_date = df_plot[df_plot['Terpakai'] == df_plot_tersedia_max].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_tersedia_min = min(df_plot['Terpakai'])
+        df_plot_tersedia_min_date = df_plot[df_plot['Terpakai'] == df_plot_tersedia_min].index.tolist()[0].strftime('%d %b %Y')
+        st_element.write(
+            f'Kamar tersedia maksimum sejumlah {df_plot_tersedia_max} pada {df_plot_tersedia_max_date}'
+        )
+        st_element.write(
+            f'Kamar tersedia minimum sejumlah {df_plot_tersedia_min} pada {df_plot_tersedia_min_date}'
+        )
+    if 'Tersedia (persen)' in df_plot.columns:
+        df_plot_tersedia_max = max(df_plot['Tersedia (persen)'])
+        df_plot_tersedia_max_date = df_plot[df_plot['Tersedia (persen)'] == df_plot_tersedia_max].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_tersedia_min = min(df_plot['Tersedia (persen)'])
+        df_plot_tersedia_min_date = df_plot[df_plot['Tersedia (persen)'] == df_plot_tersedia_min].index.tolist()[0].strftime('%d %b %Y')
+        st_element.write(
+            f'Kamar tersedia maksimum sejumlah {df_plot_tersedia_max:.2f}% pada {df_plot_tersedia_max_date}'
+        )
+        st_element.write(
+            f'Kamar tersedia minimum sejumlah {df_plot_tersedia_min:.2f}% pada {df_plot_tersedia_min_date}'
+        )
+    st_element.write('\n\n')
+
 
 def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_element=None,axis_mode=None):
     if st_element == None:
@@ -104,30 +152,45 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
         for header_name in header_list:
             rename_columns[header_name] = f'{header_name} (persen)'
         df_plot = df_plot.rename(columns=rename_columns)
-    # st_element.write(df_plot)
 
     # st_element.bar_chart(df_plot.iloc[0])
     df_plot = df_plot.reset_index().rename(columns={'tanggal_update': 'Tanggal'})
-    df_alt = pd.DataFrame({
-        'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
-        'Jumlah': [df_plot.iloc[0]['Terpakai'], df_plot.iloc[0]['Tersedia']],
-        'Ketersediaan': ['Terpakai','Tersedia']
-    })
+    try:
+        df_alt = pd.DataFrame({
+            'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
+            'Jumlah': [df_plot.iloc[0]['Terpakai'], df_plot.iloc[0]['Tersedia']],
+            'Ketersediaan': ['Terpakai','Tersedia']
+        })
+    except KeyError:
+        tmp_terpakai = df_plot.iloc[0]['Terpakai (persen)']
+        tmp_tersedia = df_plot.iloc[0]['Tersedia (persen)']
+        df_alt = pd.DataFrame({
+            'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
+            'Jumlah': [df_plot.iloc[0]['Terpakai (persen)'], df_plot.iloc[0]['Tersedia (persen)']],
+            'Ketersediaan': [f'Terpakai: {tmp_terpakai:.2f}%',f'Tersedia: {tmp_tersedia:.2f}%']
+        })
     # st_element.write(df_plot)
     # st_element.write(df_alt)
     if df_alt.iloc[0]['Jumlah'] == 0 and df_alt.iloc[1]['Jumlah'] == 0:
         date_selected = df_alt.iloc[0]['Tanggal'].strftime('%Y/%m/%d')
         st_element.markdown(f'**(Data belum tersedia pada {date_selected})**')
     else:
-        c = alt.Chart(df_alt).mark_bar().encode(
-            x=alt.X('Ketersediaan', scale=alt.Scale(), title=None, ),
-            y=alt.Y('Jumlah', title='Jumlah'),
-            color=alt.Color('Ketersediaan',legend=None),
-        ).properties(
-            width=500,
-            height=400,
-        )
-        st_element.altair_chart(c,use_container_width=False)
+        if axis_mode == 'Absolut':
+            c = alt.Chart(df_alt).mark_bar().encode(
+                x=alt.X('Ketersediaan', scale=alt.Scale(), title=None, ),
+                y=alt.Y('Jumlah', title='Jumlah'),
+                color=alt.Color('Ketersediaan',legend=None),
+            ).properties(
+                width=500,
+                height=400,
+            )
+            st_element.altair_chart(c,use_container_width=False)
+        elif axis_mode == 'Persentase':
+            c = alt.Chart(df_alt).mark_arc().encode(
+                theta=alt.Theta(field="Jumlah", type="quantitative"),
+                color=alt.Color(field="Ketersediaan", type="nominal"),
+            )
+            st_element.altair_chart(c,use_container_width=True)
 
 # Create a text element and let the reader know the data is loading.
 data_load_state = st.text('Loading data...')
@@ -215,18 +278,22 @@ filter_kota = st.sidebar.selectbox(
     options=list_kota,
     index=0,
 )
-filter_ketersediaan = st.sidebar.radio(
-    label='Ketersediaan',
-    options=['Semua','Terpakai','Tersedia'],
-)
 axis_mode = st.sidebar.radio(
     label='Tampilan Nilai Grafik',
     options=['Absolut','Persentase'],
 )
-if filter_ketersediaan == 'Semua':
-    filter_ketersediaan = ['Terpakai','Tersedia']
+
+if filter_mode_tanggal == 'Rentang':
+    filter_ketersediaan = st.sidebar.radio(
+        label='Ketersediaan',
+        options=['Semua','Terpakai','Tersedia'],
+    )
+    if filter_ketersediaan == 'Semua':
+        filter_ketersediaan = ['Terpakai','Tersedia']
+    else:
+        filter_ketersediaan = [filter_ketersediaan]
 else:
-    filter_ketersediaan = [filter_ketersediaan]
+    filter_ketersediaan = ['Terpakai','Tersedia']
 
 
 ## Main content
