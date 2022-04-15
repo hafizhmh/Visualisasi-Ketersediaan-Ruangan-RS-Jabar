@@ -1,10 +1,12 @@
 from datetime import datetime
 import streamlit as st
 import pandas as pd
+import altair as alt
 
 st.set_page_config(layout="wide")
+# st.title('Halo Wil')
 st.title('Data Ketersediaan Kasur di Rumah Sakit Jawa Barat')
-DATA_URL = ('satgas-covid-19-dp_cvd_bor_data_wilayah_data.csv')
+DATA_URL = ('satgas-covid-19-dp_cvd_bor_data_wilayah_data copy.csv')
 colsize=[3.2,5]
 
 @st.cache
@@ -29,7 +31,7 @@ def filter_agg(data, list_filter=None,kota=None):
         temp_data = temp_data[filter_ruangan]
     return temp_data.groupby('tanggal_update', as_index=True).sum()
 
-def plot_ketersediaan(ruang,kota,data,filter_ruangan,rename_columns,start_date,end_date,st_element=None,axis_mode=None):
+def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_date,st_element=None,axis_mode=None):
     if st_element == None:
         st_element = st
     df_plot = filter_agg(data,filter_ruangan,[kota])
@@ -61,6 +63,71 @@ def plot_ketersediaan(ruang,kota,data,filter_ruangan,rename_columns,start_date,e
             rename_columns[header_name] = f'{header_name} (persen)'
         df_plot = df_plot.rename(columns=rename_columns)
     st_element.line_chart(df_plot)
+
+def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_element=None,axis_mode=None):
+    if st_element == None:
+        st_element = st
+    df_plot = filter_agg(data,filter_ruangan,[kota])
+    # st_element.write(df_plot.reset_index())
+    c = alt.Chart(df_plot.reset_index()).mark_bar().encode(
+        x='tanggal_update:O',
+        # y='sum(yield):Q',
+        # color='year:N',
+        # column='site:N'
+    )
+    # st_element.write(df_plot)
+    df_plot = df_plot.loc[date:date]
+    # st_element.write(df_plot)
+
+    if axis_mode == 'Persentase':
+        a = df_plot.iloc[:,0] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
+        b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
+        try:
+            df_plot.iloc[:,0] = a
+            df_plot.iloc[:,1] = b
+        except Exception:
+            pass
+        df_plot.fillna(0)
+
+    selected_ruang = []
+    for state in filter_ketersediaan:
+        try:
+            selected_ruang += filter_ruangan[state]
+        except Exception:
+            pass
+    df_plot = df_plot[selected_ruang]
+    df_plot = df_plot.rename(columns=rename_columns)
+
+    if axis_mode == 'Persentase':
+        header_list = df_plot.columns.values.tolist()
+        rename_columns = {}
+        for header_name in header_list:
+            rename_columns[header_name] = f'{header_name} (persen)'
+        df_plot = df_plot.rename(columns=rename_columns)
+    # st_element.write(df_plot)
+
+    # st_element.bar_chart(df_plot.iloc[0])
+    df_plot = df_plot.reset_index().rename(columns={'tanggal_update': 'Tanggal'})
+    df_alt = pd.DataFrame({
+        'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
+        'Jumlah': [df_plot.iloc[0]['Terpakai'], df_plot.iloc[0]['Tersedia']],
+        'Ketersediaan': ['Terpakai','Tersedia']
+    })
+    # st_element.write(df_plot)
+    # st_element.write(df_alt)
+    if df_alt.iloc[0]['Jumlah'] == 0 and df_alt.iloc[1]['Jumlah'] == 0:
+        date_selected = df_alt.iloc[0]['Tanggal'].strftime('%Y/%m/%d')
+        st_element.markdown(f'**(Data belum tersedia pada {date_selected})**')
+    else:
+        c = alt.Chart(df_alt).mark_bar().encode(
+            x=alt.X('Ketersediaan', scale=alt.Scale(), title=None, ),
+            y=alt.Y('Jumlah', title='Jumlah'),
+            color=alt.Color('Ketersediaan',legend=None),
+        ).properties(
+            width=500,
+            height=400,
+        )
+        st_element.altair_chart(c,use_container_width=False)
 
 # Create a text element and let the reader know the data is loading.
 data_load_state = st.text('Loading data...')
@@ -184,14 +251,14 @@ if filter_mode_tanggal == 'Rentang':
         'icu_tekanan_negatif_tanpa_ventilator_terpakai':'Terpakai',
         }
     col2.write('Bertekanan Negatif, Berventilator')
-    plot_ketersediaan('ICU',filter_kota,data,icu_negpres_vent_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,icu_negpres_vent_filter,rename_columns,start_date,end_date,col2,axis_mode)
     col2.write('Bertekanan Negatif, tanpa Ventilator')
-    plot_ketersediaan('ICU',filter_kota,data,icu_negpres_tanpavent_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,icu_negpres_tanpavent_filter,rename_columns,start_date,end_date,col2,axis_mode)
 
     col2.write('Tanpa Tekanan Negatif, Berventilator')
-    plot_ketersediaan('ICU',filter_kota,data,icu_tanpanegpres_vent_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,icu_tanpanegpres_vent_filter,rename_columns,start_date,end_date,col2,axis_mode)
     col2.write('Tanpa tekanan Negatif, tanpa Ventilator')
-    plot_ketersediaan('ICU',filter_kota,data,icu_tanpanegpres_tanpavent_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,icu_tanpanegpres_tanpavent_filter,rename_columns,start_date,end_date,col2,axis_mode)
 
 
     st.header(f'Ketersediaan Ruang Isolasi {filter_kota}')
@@ -210,9 +277,9 @@ if filter_mode_tanggal == 'Rentang':
         'isolasi_tanpa_tekanan_negatif_terpakai':'Terpakai'
         }
     col2.write('Bertekanan Negatif')
-    plot_ketersediaan('Isolasi',filter_kota,data,isolasi_negpres_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,isolasi_negpres_filter,rename_columns,start_date,end_date,col2,axis_mode)
     col2.write('Tanpa Tekanan Negatif')
-    plot_ketersediaan('Isolasi',filter_kota,data,isolasi_tanpanegpres_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,isolasi_tanpanegpres_filter,rename_columns,start_date,end_date,col2,axis_mode)
 
 
 
@@ -225,7 +292,7 @@ if filter_mode_tanggal == 'Rentang':
     )
 
     rename_columns={'nicu_covid_terpakai':'Terpakai','nicu_covid_tersedia':'Tersedia'}
-    plot_ketersediaan('NICU',filter_kota,data,nicu_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,nicu_filter,rename_columns,start_date,end_date,col2,axis_mode)
 
 
 
@@ -233,7 +300,7 @@ if filter_mode_tanggal == 'Rentang':
     col1,col2 = st.columns(colsize)
     col1.write('Ruang Pediatric Intensive Care Unit (PICU) merupakan ruangan yang melayani perawatan pasien kritis anak-anak')
     rename_columns={'picu_covid_terpakai':'Terpakai','picu_covid_tersedia':'Tersedia'}
-    plot_ketersediaan('PICU',filter_kota,data,picu_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,picu_filter,rename_columns,start_date,end_date,col2,axis_mode)
 
 
     st.header(f'Ketersediaan Ruang IGD {filter_kota}')
@@ -246,7 +313,7 @@ if filter_mode_tanggal == 'Rentang':
         Kebanyakan UGD buka 24 jam, meski pada malam hari jumlah staf yang ada di sana akan lebih sedikit.'
     )
     rename_columns={'igd_covid_terpakai':'Terpakai','igd_covid_tersedia':'Tersedia'}
-    plot_ketersediaan('IGD',filter_kota,data,igd_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,igd_filter,rename_columns,start_date,end_date,col2,axis_mode)
 
     st.header(f'Ketersediaan Ruang VK {filter_kota}')
     col1,col2 = st.columns(colsize)
@@ -258,4 +325,99 @@ if filter_mode_tanggal == 'Rentang':
         Ruang VK juga dapat digunakan pada persiapan persalinan dengan operasi sesar.'
         )
     rename_columns={'vk_covid_terpakai':'Terpakai','vk_covid_tersedia':'Tersedia'}
-    plot_ketersediaan('VK',filter_kota,data,vk_filter,rename_columns,start_date,end_date,col2,axis_mode)
+    plot_ketersediaan(filter_kota,data,vk_filter,rename_columns,start_date,end_date,col2,axis_mode)
+elif filter_mode_tanggal == 'Tanggal Tunggal':
+    st.header(f'Ketersediaan Ruang ICU {filter_kota}')
+    col1,col2 = st.columns(colsize)
+    col1.write(
+        'Ruang Intensive Care Unit (ICU) adalah bagian khusus dari rumah sakit atau fasilitas kesehatan \
+        lainnya yang melakukan pelayanan rawat intensif.\n\nInstalasi ini menangani pasien dengan \
+        penyakit atau cedera yang parah atau membahayakan nyawa, dengan kebutuhan perawatan terus \
+        menerus, pemantauan langsung dengan alat-alat, atau obat-obatan untuk menjaga fungsi tubuh normal.'
+        )
+    rename_columns={
+        'icu_tanpa_tekanan_negatif_dengan_ventilator_tersedia':'Tersedia',
+        'icu_tanpa_tekanan_negatif_dengan_ventilator_terpakai':'Terpakai',
+        'icu_tanpa_tekanan_negatif_tanpa_ventilator_tersedia':'Tersedia',
+        'icu_tanpa_tekanan_negatif_tanpa_ventilator_terpakai':'Terpakai',
+        'icu_tekanan_negatif_dengan_ventilator_tersedia':'Tersedia',
+        'icu_tekanan_negatif_dengan_ventilator_terpakai':'Terpakai',
+        'icu_tekanan_negatif_tanpa_ventilator_tersedia':'Tersedia',
+        'icu_tekanan_negatif_tanpa_ventilator_terpakai':'Terpakai',
+        }
+    col2.write('Bertekanan Negatif, Berventilator')
+    plot_ketersediaan_tunggal(filter_kota,data,icu_negpres_vent_filter,rename_columns,tanggal,col2,axis_mode)
+    col2.write('Bertekanan Negatif, tanpa Ventilator')
+    plot_ketersediaan_tunggal(filter_kota,data,icu_negpres_tanpavent_filter,rename_columns,tanggal,col2,axis_mode)
+
+    col2.write('Tanpa Tekanan Negatif, Berventilator')
+    plot_ketersediaan_tunggal(filter_kota,data,icu_tanpanegpres_vent_filter,rename_columns,tanggal,col2,axis_mode)
+    col2.write('Tanpa tekanan Negatif, tanpa Ventilator')
+    plot_ketersediaan_tunggal(filter_kota,data,icu_tanpanegpres_tanpavent_filter,rename_columns,tanggal,col2,axis_mode)
+
+
+    st.header(f'Ketersediaan Ruang Isolasi {filter_kota}')
+    col1,col2 = st.columns(colsize)
+    col1.write(
+        'Ruang isolasi merupakan area sementara yang diperuntukkan bagi orang suspek terinfeksi \
+        untuk mencegah penularan penyakit yang akan menjadi wabah apabila dibiarkan. \n\n Ruang \
+        isolasi yang menggunakan tekanan udara negatif digunakan untuk pasien yang terinfeksi \
+        lewat udara. Dengan tekanan negatif ini, udara dari dalam ruang isolasi yang mungkin \
+        mengandung kuman penyebab infeksi tidak keluar dan mengontaminasi udara luar.'
+        )
+    rename_columns={
+        'isolasi_tekanan_negatif_tersedia':'Tersedia',
+        'isolasi_tekanan_negatif_terpakai':'Terpakai',
+        'isolasi_tanpa_tekanan_negatif_tersedia':'Tersedia',
+        'isolasi_tanpa_tekanan_negatif_terpakai':'Terpakai'
+        }
+    col2.write('Bertekanan Negatif')
+    plot_ketersediaan_tunggal(filter_kota,data,isolasi_negpres_filter,rename_columns,tanggal,col2,axis_mode)
+    col2.write('Tanpa Tekanan Negatif')
+    plot_ketersediaan_tunggal(filter_kota,data,isolasi_tanpanegpres_filter,rename_columns,tanggal,col2,axis_mode)
+
+
+
+    st.header(f'Ketersediaan Ruang NICU {filter_kota}')
+    col1,col2 = st.columns(colsize)
+    col1.write(
+        'Ruangan Neonatal Intensive Care Unit (NICU) adalah ruang perawatan intensif untuk bayi \
+        (sampai usia 28 hari) yang memerlukan pengobatan dan perawatan khusus, guna mencegah \
+        dan mengobati terjadinya kegagalan organ-organ vital'
+    )
+
+    rename_columns={'nicu_covid_terpakai':'Terpakai','nicu_covid_tersedia':'Tersedia'}
+    plot_ketersediaan_tunggal(filter_kota,data,nicu_filter,rename_columns,tanggal,col2,axis_mode)
+
+
+
+    st.header(f'Ketersediaan Ruang PICU {filter_kota}')
+    col1,col2 = st.columns(colsize)
+    col1.write('Ruang Pediatric Intensive Care Unit (PICU) merupakan ruangan yang melayani perawatan pasien kritis anak-anak')
+    rename_columns={'picu_covid_terpakai':'Terpakai','picu_covid_tersedia':'Tersedia'}
+    plot_ketersediaan_tunggal(filter_kota,data,picu_filter,rename_columns,tanggal,col2,axis_mode)
+
+
+    st.header(f'Ketersediaan Ruang IGD {filter_kota}')
+    col1,col2 = st.columns(colsize)
+    col1.write(
+        'Ruang Instalasi Gawat Darurat (IGD) adalah salah satu unit dalam rumah sakit yang menyediakan \
+        penanganan awal pasien, sesuai dengan tingkat kegawatannya. Di IGD dapat ditemukan dokter umum \
+        maupun dokter spesialis bersama sejumlah perawat. \n\nSetelah penaksiran dan penanganan awal, pasien \
+        bisa dirujuk ke RS, distabilkan dan dipindahkan ke RS lain karena berbagai alasan, atau dikeluarkan. \
+        Kebanyakan UGD buka 24 jam, meski pada malam hari jumlah staf yang ada di sana akan lebih sedikit.'
+    )
+    rename_columns={'igd_covid_terpakai':'Terpakai','igd_covid_tersedia':'Tersedia'}
+    plot_ketersediaan_tunggal(filter_kota,data,igd_filter,rename_columns,tanggal,col2,axis_mode)
+
+    st.header(f'Ketersediaan Ruang VK {filter_kota}')
+    col1,col2 = st.columns(colsize)
+    col1.write(
+        'Ruang Verlos Kamer (VK) atau Ruang Bersalin adalah adalah sebuah unit layanan pada rumah sakit \
+        yang berfungsi sebagai ruang persalinan. Meskipun persalinan normal dapat dilakukan di Puskesman, \
+        Ruang VK juga dapat digunakan untuk persalinan normal pada pasien dengan indikasi tertentu yang \
+        tidak dapat ditangani oleh Puskesmas, misalnya yaitu partus tidak maju dan partus dengan hipertensi. \
+        Ruang VK juga dapat digunakan pada persiapan persalinan dengan operasi sesar.'
+        )
+    rename_columns={'vk_covid_terpakai':'Terpakai','vk_covid_tersedia':'Tersedia'}
+    plot_ketersediaan_tunggal(filter_kota,data,vk_filter,rename_columns,tanggal,col2,axis_mode)
