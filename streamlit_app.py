@@ -64,7 +64,7 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
         df_plot = df_plot.rename(columns=rename_columns)
 
     st_element.line_chart(df_plot)
-
+    st_element.write(df_plot)
     if 'Terpakai' in df_plot.columns:
         df_plot_terpakai_max = max(df_plot['Terpakai'])
         df_plot_terpakai_max_date = df_plot[df_plot['Terpakai'] == df_plot_terpakai_max].index.tolist()[0].strftime('%d %b %Y')
