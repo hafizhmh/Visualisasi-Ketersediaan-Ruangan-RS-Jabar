@@ -88,10 +88,10 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
             f'Kamar terpakai minimum sejumlah {df_plot_terpakai_min:.2f}% pada {df_plot_terpakai_min_date}'
         )
     if 'Tersedia' in df_plot.columns:
-        df_plot_tersedia_max = max(df_plot['Terpakai'])
-        df_plot_tersedia_max_date = df_plot[df_plot['Terpakai'] == df_plot_tersedia_max].index.tolist()[0].strftime('%d %b %Y')
-        df_plot_tersedia_min = min(df_plot['Terpakai'])
-        df_plot_tersedia_min_date = df_plot[df_plot['Terpakai'] == df_plot_tersedia_min].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_tersedia_max = max(df_plot['Tersedia'])
+        df_plot_tersedia_max_date = df_plot[df_plot['Tersedia'] == df_plot_tersedia_max].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_tersedia_min = min(df_plot['Tersedia'])
+        df_plot_tersedia_min_date = df_plot[df_plot['Tersedia'] == df_plot_tersedia_min].index.tolist()[0].strftime('%d %b %Y')
         st_element.write(
             f'Kamar tersedia maksimum sejumlah {df_plot_tersedia_max} pada {df_plot_tersedia_max_date}'
         )
