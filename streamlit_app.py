@@ -174,8 +174,17 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
     # st_element.write(df_plot)
 
     if axis_mode == 'Persentase':
-        a = df_plot.iloc[:,0] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
-        b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
+        # st_element.write(df_plot)
+        # a = df_plot.iloc[:,0] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
+        # b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
+        a = (df_plot.iloc[:,0]-df_plot.iloc[:,1]) *100 / (df_plot.iloc[:,0])
+        b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0])
+        if (a[0]<0) or (b[0]<0):
+            st_element.write('(Data tidak valid)')
+            st_element.markdown("""---""")
+            return
+        # st_element.write(a)
+        # st_element.write(b)
         try:
             df_plot.iloc[:,0] = a
             df_plot.iloc[:,1] = b
@@ -205,7 +214,7 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
         df_alt = pd.DataFrame({
             'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
             'Jumlah': [df_plot.iloc[0]['Terpakai'], df_plot.iloc[0]['Tersedia']],
-            'Ketersediaan': ['Terpakai','Tersedia']
+            'Ketersediaan': ['Terpakai','Kosong']
         })
     except KeyError:
         tmp_terpakai = df_plot.iloc[0]['Terpakai (persen)']
@@ -213,7 +222,7 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
         df_alt = pd.DataFrame({
             'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
             'Jumlah': [df_plot.iloc[0]['Terpakai (persen)'], df_plot.iloc[0]['Tersedia (persen)']],
-            'Ketersediaan': [f'Terpakai: {tmp_terpakai:.2f}%',f'Tersedia: {tmp_tersedia:.2f}%']
+            'Ketersediaan': [f'Terpakai: {tmp_terpakai:.2f}%',f'Kosong: {tmp_tersedia:.2f}%']
         })
     # st_element.write(df_plot)
     # st_element.write(df_alt)
@@ -229,7 +238,7 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
             )
             st_element.altair_chart(c,use_container_width=False)
         elif axis_mode == 'Persentase':
-            st_element.write(df_alt)
+            # st_element.write(df_alt)
             c = alt.Chart(df_alt).mark_arc().encode(
                 theta=alt.Theta(field="Jumlah", type="quantitative"),
                 color=alt.Color(field="Ketersediaan", type="nominal"),
