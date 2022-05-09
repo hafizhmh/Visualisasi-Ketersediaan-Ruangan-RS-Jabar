@@ -344,16 +344,25 @@ axis_mode = st.sidebar.radio(
 )
 
 if filter_mode_tanggal == 'Rentang':
+    if axis_mode == 'Persentase':
+        mode_opsions = ['Semua','Terpakai (persen)','Kosong (persen)']
+    else:
+        mode_opsions = ['Semua','Terpakai','Tersedia']
     filter_ketersediaan = st.sidebar.radio(
         label='Ketersediaan',
-        options=['Semua','Terpakai','Tersedia'],
+        options=mode_opsions,
     )
     if filter_ketersediaan == 'Semua':
         filter_ketersediaan = ['Terpakai','Tersedia']
+    elif filter_ketersediaan == 'Terpakai (persen)':
+        filter_ketersediaan = ['Terpakai']
+    elif filter_ketersediaan == 'Kosong (persen)':
+        filter_ketersediaan = ['Tersedia']
     else:
         filter_ketersediaan = [filter_ketersediaan]
 else:
     filter_ketersediaan = ['Terpakai','Tersedia']
+print(f'\n\n\n{filter_ketersediaan}\n\n\n')
 
 
 ## Main content
