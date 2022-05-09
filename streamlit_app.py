@@ -2,6 +2,10 @@ from datetime import datetime
 import streamlit as st
 import pandas as pd
 import altair as alt
+from os import system
+system('cls')
+print('='*20)
+print(datetime.now())
 
 st.set_page_config(layout="wide")
 # st.title('Halo Wil')
@@ -224,11 +228,19 @@ def plot_ketersediaan_tunggal(kota,data,filter_ruangan,rename_columns,date,st_el
     # st_element.bar_chart(df_plot.iloc[0])
     df_plot = df_plot.reset_index().rename(columns={'tanggal_update': 'Tanggal'})
     try:
+        print('='*30)
+        print(df_plot)
+        # if axis_mode == 'Persentase':
+        #     ketersediaan = ['Terpakai','Kosong']
+        # else:
+        ketersediaan = ['Terpakai','Tersedia']
         df_alt = pd.DataFrame({
             'Tanggal': [df_plot.iloc[0]['Tanggal'], df_plot.iloc[0]['Tanggal']],
             'Jumlah': [df_plot.iloc[0]['Terpakai'], df_plot.iloc[0]['Tersedia']],
-            'Ketersediaan': ['Terpakai','Kosong']
+            'Ketersediaan': ketersediaan
         })
+        print(df_alt)
+        print('='*30)
     except KeyError:
         tmp_terpakai = df_plot.iloc[0]['Terpakai (persen)']
         tmp_tersedia = df_plot.iloc[0]['Tersedia (persen)']
