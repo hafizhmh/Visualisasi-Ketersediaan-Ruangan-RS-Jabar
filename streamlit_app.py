@@ -38,8 +38,10 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
     df_plot = df_plot.loc[start_date:end_date]
 
     if axis_mode == 'Persentase':
-        a = df_plot.iloc[:,0] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
-        b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])
+        # a = df_plot.iloc[:,0] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])    #tersedia
+        # b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0] + df_plot.iloc[:,1])    #terpakai
+        a = (df_plot.iloc[:,0]-df_plot.iloc[:,1]) *100 / (df_plot.iloc[:,0])    #kosong
+        b = df_plot.iloc[:,1] *100 / (df_plot.iloc[:,0])    #terpakai
         try:
             df_plot.iloc[:,0] = a
             df_plot.iloc[:,1] = b
@@ -63,6 +65,7 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
             rename_columns[header_name] = f'{header_name} (persen)'
         df_plot = df_plot.rename(columns=rename_columns)
 
+    df_plot=df_plot.rename(columns={'Tersedia (persen)':'Kosong (persen)'})
     st_element.line_chart(df_plot)
     # st_element.write(df_plot)
     df_list = []
@@ -126,11 +129,11 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
             'Selisih': [abs(int(df_plot_tersedia_max) - int(df_plot_tersedia_min))],
         })
         df_list.append(df_tmp)
-    if 'Tersedia (persen)' in df_plot.columns:
-        df_plot_tersedia_max = max(df_plot['Tersedia (persen)'])
-        df_plot_tersedia_max_date = df_plot[df_plot['Tersedia (persen)'] == df_plot_tersedia_max].index.tolist()[0].strftime('%d %b %Y')
-        df_plot_tersedia_min = min(df_plot['Tersedia (persen)'])
-        df_plot_tersedia_min_date = df_plot[df_plot['Tersedia (persen)'] == df_plot_tersedia_min].index.tolist()[0].strftime('%d %b %Y')
+    if 'Kosong (persen)' in df_plot.columns:
+        df_plot_tersedia_max = max(df_plot['Kosong (persen)'])
+        df_plot_tersedia_max_date = df_plot[df_plot['Kosong (persen)'] == df_plot_tersedia_max].index.tolist()[0].strftime('%d %b %Y')
+        df_plot_tersedia_min = min(df_plot['Kosong (persen)'])
+        df_plot_tersedia_min_date = df_plot[df_plot['Kosong (persen)'] == df_plot_tersedia_min].index.tolist()[0].strftime('%d %b %Y')
         # st_element.write(
         #     f'Kamar tersedia maksimum sejumlah {df_plot_tersedia_max:.2f}% pada {df_plot_tersedia_max_date}'
         # )
@@ -138,7 +141,7 @@ def plot_ketersediaan(kota,data,filter_ruangan,rename_columns,start_date,end_dat
         #     f'Kamar tersedia minimum sejumlah {df_plot_tersedia_min:.2f}% pada {df_plot_tersedia_min_date}'
         # )
         df_tmp = pd.DataFrame({
-            'Ketersediaan': ['Tersedia (persen)'],
+            'Ketersediaan': ['Kosong (persen)'],
             'Tanggal Maksimum': [df_plot_tersedia_max_date],
             'Maksimum': [df_plot_tersedia_max],
             'Tanggal Minimum': [df_plot_tersedia_min_date],
